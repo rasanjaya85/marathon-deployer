@@ -11,19 +11,18 @@ require 'json'
 @http = Net::HTTP.new(@uri.host, @uri.port)
 
 if ARGV.length < 2
-  puts "Usage 'marathon-deployer [image] [id] [env]'"
-  puts "Example 'marathon-deployer rasanjaya85/weather-service weather-service ELASTICSEARCH_HOST=192.168.33.x'"
+  puts "Usage 'marathon-deployer [image] [id]'"
+  puts "Example 'marathon-deployer rasanjaya85/weather-service weather-service'"
   exit 1
 end
 
 image = ARGV[0]
 id = ARGV[1]
-env = ARGV.length == 3 ? ARGV[2] : ''
 
 puts "Deploying application '#{id}' to Marathon[#{@url}]"
 
 # Build the Marathon JSON given a Docker image and and Marathon ID
-def get_json(image, id, env)
+def get_json(image, id)
   {
       :container => {
           :type => 'DOCKER',
@@ -54,11 +53,7 @@ def get_json(image, id, env)
                             :intervalSeconds => 10,
                             :timeoutSeconds => 20,
                             :maxConsecutiveFailures => 3
-                        }],
-      :env => Hash[env.split(',')
-                       .collect { |var| var.split('=') }
-                       .map {|key, value| [key, value]}]
-
+                        }]
   }
 end
 
@@ -110,7 +105,7 @@ def delete_deployment(deployment_id)
   @http.delete("/v2/deployments/#{deployment_id}", @headers)
 end
 
-json = get_json image, id, env
+json = get_json image, id
 exists = app_exists id
 deployment_id = deploy json, id, exists
 
